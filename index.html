@@ -2,19 +2,284 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>AIEC Redirecting...</title>
-<script>
-  fetch('target.txt?t=' + Date.now())
-    .then(r => r.text())
-    .then(url => {
-      url = url.trim();
-      if (url) window.location.replace(url);
-      else document.body.innerText = 'target.txt is empty.';
-    })
-    .catch(() => { document.body.innerText = 'Failed to load target.'; });
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIEC · AI Engineering Club</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --fg: #d4d4d4;
+    --dim: #7a7a7a;
+    --gold: #d4a843;
+    --blue: #4a7fb5;
+    --green: #6fbf73;
+    --line: #1f1f1f;
+    --mono: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.7;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 80px 28px 120px;
+  }
+
+  /* 顶栏 */
+  .topbar {
+    font-size: 12px;
+    color: var(--dim);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topbar .dots {
+    display: flex;
+    gap: 6px;
+  }
+  .topbar .dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+  }
+  .dots .r { background: #ff5f57; }
+  .dots .y { background: #febc2e; }
+  .dots .g { background: #28c840; }
+
+  /* Prompt 行 */
+  .prompt { color: var(--dim); font-size: 13px; margin-bottom: 24px; }
+  .prompt .user { color: var(--blue); }
+  .prompt .path { color: var(--green); }
+  .prompt .cmd { color: var(--fg); }
+
+  /* Logo */
+  .logo {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin: 20px 0 16px;
+  }
+  .logo .dot { color: var(--gold); }
+
+  .tagline {
+    font-size: 17px;
+    color: var(--dim);
+    margin-bottom: 56px;
+    line-height: 1.6;
+  }
+  .tagline em { color: var(--fg); font-style: normal; }
+
+  /* Section */
+  section { margin-bottom: 56px; }
+
+  h2 {
+    font-size: 14px;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+  h2::before { content: "$ "; color: var(--dim); }
+
+  p { color: var(--fg); margin-bottom: 14px; }
+  p.dim { color: var(--dim); }
+
+  ul { list-style: none; }
+  ul li {
+    color: var(--fg);
+    padding: 6px 0 6px 20px;
+    position: relative;
+  }
+  ul li::before {
+    content: "▸";
+    color: var(--blue);
+    position: absolute;
+    left: 0;
+  }
+
+  /* 项目卡片 */
+  .project {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .project:hover { border-color: #2f2f2f; }
+  .project .name {
+    font-weight: 700;
+    color: var(--fg);
+    margin-bottom: 6px;
+    font-size: 15px;
+  }
+  .project .name::before { content: "→ "; color: var(--gold); }
+  .project .desc { color: var(--dim); font-size: 14px; line-height: 1.6; }
+
+  /* 团队 */
+  .team-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-bottom: 12px;
+  }
+  .team-row .role {
+    color: var(--dim);
+    font-size: 13px;
+    min-width: 120px;
+  }
+  .team-row .who { color: var(--fg); font-size: 14px; }
+
+  /* 技术栈标签 */
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tags span {
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .tags span:hover { color: var(--gold); border-color: var(--gold); }
+
+  /* 引用 */
+  blockquote {
+    border-left: 2px solid var(--gold);
+    padding: 4px 0 4px 18px;
+    color: var(--dim);
+    font-style: italic;
+    margin: 32px 0;
+    font-size: 14px;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--dim);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  footer .blink {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--gold);
+    vertical-align: middle;
+    margin-left: 4px;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { color: var(--gold); }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 48px 20px 80px; }
+    .logo { font-size: 42px; }
+    .tagline { font-size: 15px; }
+  }
+</style>
 </head>
 <body>
-<p>Redirecting to the current AIEC site...</p>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+    <div>aiec — bash — 80×24</div>
+  </div>
+
+  <div class="prompt">
+    <span class="user">admin@aiec</span>:<span class="path">~</span>$ <span class="cmd">./club --info</span>
+  </div>
+
+  <div class="logo">AIEC<span class="dot">.</span></div>
+  <p class="tagline">
+    我们不讨论“AI 会不会取代人类”，<em>我们写代码让它跑起来</em>。
+  </p>
+
+  <section>
+    <h2>关于我们</h2>
+    <p>AIEC（AI Engineering Club）是一个以<strong>工程实践</strong>驱动的 AI 技术社团。我们不教你怎么在网页上跟 AI 聊天，我们教你怎么写 API、构建 Agent、部署模型、做内网穿透——从第一行代码到上线跑起来，全程自己搞定。</p>
+    <p class="dim">采用 PBL（项目驱动）模式。每次活动，你带着电脑来，带着一个能跑的项目走。学期末，你收获的不是一张证书，而是一份可以写进作品集的真实项目。</p>
+  </section>
+
+  <section>
+    <h2>我们教什么</h2>
+    <ul>
+      <li>API 调用与多模型编排（OpenAI / Anthropic / DeepSeek）</li>
+      <li>Agent 构建与工具调用（Tool Calling）</li>
+      <li>Linux 运维与服务器部署</li>
+      <li>内网穿透与云端上线</li>
+      <li>提示词工程与上下文管理</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>项目展示</h2>
+
+    <div class="project">
+      <div class="name">QuizAuto</div>
+      <div class="desc">AI 自动批改机。调用千问 OCR 和 LLM，实现单词小考的自动识别与语义级批改。老师再也不用熬夜改卷子。</div>
+    </div>
+
+    <div class="project">
+      <div class="name">Forge</div>
+      <div class="desc">高性能 Agent 引擎。因为受不了现有 Agent 框架的启动速度，我们用 Go 语言从零重写了整个引擎，冷启动从数秒压到毫秒级。</div>
+    </div>
+
+    <div class="project">
+      <div class="name">BusinessSimulation</div>
+      <div class="desc">商赛沙盘系统。与商科社团联名开发，基于 Spring 架构，集成内网穿透技术。让参赛者第一次拥有不被黑箱垄断的沙盘工具。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>技术栈</h2>
+    <div class="tags">
+      <span>Python</span><span>Go</span><span>Java</span><span>Rust</span>
+      <span>C++</span><span>Linux</span><span>Docker</span><span>FastAPI</span>
+      <span>Agent</span><span>API</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>团队</h2>
+    <div class="team-row">
+      <span class="role">负责人</span>
+      <span class="who">马天一 · 郑丁铭 · 田书玮</span>
+    </div>
+    <div class="team-row">
+      <span class="role">吉祥物</span>
+      <span class="who">马斯克 · 黄仁勋</span>
+    </div>
+  </section>
+
+  <blockquote>
+    "Talk is cheap. Show me the code." — Linus Torvalds
+  </blockquote>
+
+  <footer>
+    <div>AIEC · AI Engineering Club · 2026</div>
+    <div>admin@aiec:~$ <span class="blink"></span></div>
+  </footer>
+
+</div>
 </body>
 </html>
